@@ -1,2 +1,4 @@
 main.exe
 go.sum
+bin/
+config.toml

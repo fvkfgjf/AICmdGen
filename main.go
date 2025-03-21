@@ -13,6 +13,9 @@ import (
 	"github.com/fatih/color"
 )
 
+// 全局配置变量，用于在不同函数间共享配置
+var cfg *config.Config
+
 func main() {
 	// 检查命令行参数
 	if len(os.Args) < 2 {
@@ -21,7 +24,8 @@ func main() {
 	}
 
 	// 初始化配置
-	cfg, err := config.Load()
+	var err error
+	cfg, err = config.Load()
 	if err != nil {
 		// 如果配置文件不存在，创建默认配置文件
 		cfg = &config.Config{
@@ -44,7 +48,12 @@ func main() {
 		}
 	} else {
 		// 打印配置信息以便调试
-		log.Printf("已加载配置: URL=%s, Model=%s", cfg.API.URL, cfg.API.Model)
+		if cfg.App.DebugMode {
+			log.Printf("[DEBUG] 已加载配置: URL=%s, Model=%s", cfg.API.URL, cfg.API.Model)
+			log.Printf("[DEBUG] 调试模式已启用")
+		} else {
+			log.Printf("已加载配置: URL=%s, Model=%s", cfg.API.URL, cfg.API.Model)
+		}
 	}
 
 	// 创建命令生成器
@@ -53,10 +62,19 @@ func main() {
 	// 获取用户请求
 	request := strings.Join(os.Args[1:], " ")
 
+	if cfg.App.DebugMode {
+		log.Printf("[DEBUG] 用户请求: %s", request)
+	}
+
 	// 生成命令
 	cmd, err := cmdGen.GenerateCommand(request)
 	if err != nil {
 		log.Fatalf("生成命令失败: %v", err)
+	}
+
+	// 调试模式下打印生成的命令
+	if cfg.App.DebugMode {
+		log.Printf("[DEBUG] 生成的命令: %s", cmd)
 	}
 
 	// 输出结果
@@ -172,15 +190,22 @@ func executeCommand(command string) {
 	fmt.Println("\n" + strings.Repeat("─", 80))
 	fmt.Println("命令输出:")
 	fmt.Println(strings.Repeat("─", 80))
-
+	
+	// 删除这行错误的调试输出
+	// fmt.Println("添加导入")
+	
+	if cfg != nil && cfg.App.DebugMode {
+		log.Printf("[DEBUG] 执行命令: %s", command)
+	}
+	
 	cmd := exec.Command("cmd.exe", "/c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
+	
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("\n执行失败: %v\n", err)
 	}
-
+	
 	fmt.Println(strings.Repeat("─", 80))
 }

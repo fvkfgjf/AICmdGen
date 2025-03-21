@@ -3,6 +3,7 @@ package generator
 import (
 	"context"
 	"fmt"
+	"log"
 	"runtime"
 	"strings"
 
@@ -42,6 +43,13 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 		Temperature: openai.Float(0.2),
 	}
 
+	// 调试模式下打印请求信息
+	if g.config.App.DebugMode {
+		log.Printf("[DEBUG] 发送请求到: %s", g.config.API.URL)
+		log.Printf("[DEBUG] 使用模型: %s", g.config.API.Model)
+		log.Printf("[DEBUG] 请求内容: %s", request)
+	}
+
 	ctx := context.Background()
 	stream := g.client.Chat.Completions.NewStreaming(ctx, params)
 	defer stream.Close()
@@ -49,12 +57,24 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 	var builder strings.Builder
 	acc := openai.ChatCompletionAccumulator{}
 
+	// 调试模式下记录响应片段
+	var debugChunks []string
+	
 	for stream.Next() {
 		chunk := stream.Current()
 		acc.AddChunk(chunk)
 
+		// 调试模式下记录每个响应片段
+		if g.config.App.DebugMode {
+			debugChunks = append(debugChunks, fmt.Sprintf("%+v", chunk))
+		}
+
 		if content, ok := acc.JustFinishedContent(); ok {
 			builder.WriteString(content)
+			// 调试模式下打印每个完成的内容片段
+			if g.config.App.DebugMode {
+				log.Printf("[DEBUG] 收到内容片段: %s", content)
+			}
 		}
 	}
 
@@ -62,7 +82,29 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 		return "", fmt.Errorf("API请求失败: %w", err)
 	}
 
-	result := strings.TrimSpace(builder.String())
+	// 从响应对象中获取完整内容
+	result := ""
+	if len(acc.Choices) > 0 && acc.Choices[0].Message.Content != "" {
+		result = acc.Choices[0].Message.Content
+	} else {
+		// 如果响应对象中没有内容，则使用累积的内容
+		result = strings.TrimSpace(builder.String())
+	}
+	
+	// 检查结果是否为空
+	if result == "" {
+		return "", fmt.Errorf("API返回了空命令")
+	}
+	
+	// 调试模式下打印完整响应信息
+	if g.config.App.DebugMode {
+		log.Printf("[DEBUG] 响应完成，总共收到 %d 个片段", len(debugChunks))
+		log.Printf("[DEBUG] 完整响应内容: %s", result)
+		
+		// 打印响应对象信息
+		log.Printf("[DEBUG] 响应对象: %+v", acc)
+	}
+	
 	g.saveResponse(acc)
 	return result, nil
 }
