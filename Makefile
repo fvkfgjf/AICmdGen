@@ -7,6 +7,10 @@ CGO_ENABLED := 0
 
 all: build-windows build-linux
 
+install:
+	$(GO) mod tidy
+	$(GO) mod download
+
 build:
 	$(GO) build $(GOFLAGS) -o bin/ai.exe ./main.go
 

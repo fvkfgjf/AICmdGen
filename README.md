@@ -22,10 +22,10 @@ git clone https://github.com/28074/ai_go.git
 cd ai_go
 
 # 安装依赖
-go mod download
+make install
 
 # 编译项目
-go build -o ai_cmd.exe
+make build
 ```
 
 ## 配置指南
