@@ -59,7 +59,7 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 
 	// 调试模式下记录响应片段
 	var debugChunks []string
-	
+
 	for stream.Next() {
 		chunk := stream.Current()
 		acc.AddChunk(chunk)
@@ -90,21 +90,21 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 		// 如果响应对象中没有内容，则使用累积的内容
 		result = strings.TrimSpace(builder.String())
 	}
-	
+
 	// 检查结果是否为空
 	if result == "" {
 		return "", fmt.Errorf("API返回了空命令")
 	}
-	
+
 	// 调试模式下打印完整响应信息
 	if g.config.App.DebugMode {
 		log.Printf("[DEBUG] 响应完成，总共收到 %d 个片段", len(debugChunks))
 		log.Printf("[DEBUG] 完整响应内容: %s", result)
-		
+
 		// 打印响应对象信息
 		log.Printf("[DEBUG] 响应对象: %+v", acc)
 	}
-	
+
 	g.saveResponse(acc)
 	return result, nil
 }
@@ -115,11 +115,21 @@ func genSystemPrompt() string {
 	if runtime.GOOS == "windows" {
 		osHint = "Windows CMD"
 	}
-	return fmt.Sprintf(`作为%s专家，严格遵循：
-1. 只返回可直接执行的命令
-2. 路径空格自动加引号
-3. 多步骤用&&连接
-4. 使用相对路径`, osHint)
+	return fmt.Sprintf(`作为%s命令行专家，严格遵循：
+1. 仅返回可直接在终端执行的纯命令文本
+2. 禁止包含任何解释性文字、代码块标记或注释
+3. 路径含空格时自动添加双引号
+4. 多步骤操作使用&&连接
+5. 只使用相对路径
+6. 保持命令简洁高效
+
+正确格式示例：
+ren "old file.txt" "new file.txt"
+
+错误格式示例：
+"请使用以下命令："  # 解释性文字
+ren old.txt new.txt  # 缺少必要引号
+move file1.txt file2.txt && echo "完成"  # 多余的解释性步骤`, osHint)
 }
 
 // 保存响应到消息历史
