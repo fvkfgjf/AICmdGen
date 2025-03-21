@@ -26,13 +26,27 @@ type AppConfig struct {
 	DebugMode bool
 }
 
+// GetDefaultConfig 返回默认配置
+func GetDefaultConfig() *Config {
+	return &Config{
+		API: APIConfig{
+			URL:   "https://api.openai.com/v1",
+			Key:   "your-api-key-here",
+			Model: "gpt-3.5-turbo",
+		},
+		App: AppConfig{
+			DebugMode: false,
+		},
+	}
+}
+
 // Load 从配置文件加载配置
 func Load() (*Config, error) {
 	configPath := "config.toml"
 
-	// 检查配置文件是否存在
+	// 检查配置文件是否存在，不存在则返回错误
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("配置文件不存在，请创建 %s", configPath)
+		return nil, fmt.Errorf("配置文件不存在")
 	}
 
 	// 使用viper加载配置
@@ -48,6 +62,11 @@ func Load() (*Config, error) {
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("解析配置失败: %w", err)
+	}
+
+	// 设置默认值
+	if config.API.URL == "" {
+		config.API.URL = "https://api.openai.com/v1"
 	}
 
 	return &config, nil

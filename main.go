@@ -27,16 +27,8 @@ func main() {
 	var err error
 	cfg, err = config.Load()
 	if err != nil {
-		// 如果配置文件不存在，创建默认配置文件
-		cfg = &config.Config{
-			API: config.APIConfig{
-				Key:   "your-api-key-here", // 请替换为实际的API密钥
-				Model: "gpt-3.5-turbo",
-			},
-			App: config.AppConfig{
-				DebugMode: false,
-			},
-		}
+		// 如果配置加载失败，使用默认配置
+		cfg = config.GetDefaultConfig()
 
 		// 保存默认配置到文件
 		if err := config.Save(cfg); err != nil {
@@ -46,41 +38,49 @@ func main() {
 			log.Println("已创建默认配置文件 config.toml，请修改其中的API密钥后重新运行")
 			return
 		}
-	} else {
-		// 打印配置信息以便调试
-		if cfg.App.DebugMode {
-			log.Printf("[DEBUG] 已加载配置: URL=%s, Model=%s", cfg.API.URL, cfg.API.Model)
-			log.Printf("[DEBUG] 调试模式已启用")
-		} else {
-			log.Printf("已加载配置: URL=%s, Model=%s", cfg.API.URL, cfg.API.Model)
-		}
 	}
+
+	// 打印配置信息
+	logConfigInfo()
 
 	// 创建命令生成器
 	cmdGen := generator.New(cfg)
 
 	// 获取用户请求
 	request := strings.Join(os.Args[1:], " ")
+	logDebug("用户请求: %s", request)
 
+	// 处理命令生成和执行
+	processCommandRequest(cmdGen, request)
+}
+
+// 记录配置信息
+func logConfigInfo() {
 	if cfg.App.DebugMode {
-		log.Printf("[DEBUG] 用户请求: %s", request)
+		log.Printf("[DEBUG] 已加载配置: URL=%s, Model=%s", cfg.API.URL, cfg.API.Model)
+		log.Printf("[DEBUG] 调试模式已启用")
 	}
+}
 
+// 处理命令请求
+func processCommandRequest(cmdGen *generator.CommandGenerator, request string) {
 	// 生成命令
 	cmd, err := cmdGen.GenerateCommand(request)
 	if err != nil {
 		log.Fatalf("生成命令失败: %v", err)
 	}
 
-	// 调试模式下打印生成的命令
-	if cfg.App.DebugMode {
-		log.Printf("[DEBUG] 生成的命令: %s", cmd)
-	}
+	logDebug("生成的命令: %s", cmd)
 
 	// 输出结果
 	printPanel(request, cmd)
 
 	// 提供选项
+	handleUserChoice(cmdGen, request, cmd)
+}
+
+// 处理用户选择
+func handleUserChoice(cmdGen *generator.CommandGenerator, request, cmd string) {
 	for {
 		choice := promptChoice()
 		switch choice {
@@ -89,7 +89,7 @@ func main() {
 			return
 		case 2: // 换一条命令
 			newRequest := request + " (请提供另一种实现方式)"
-			cmd, err = cmdGen.GenerateCommand(newRequest)
+			cmd, err := cmdGen.GenerateCommand(newRequest)
 			if err != nil {
 				log.Fatalf("生成命令失败: %v", err)
 			}
@@ -97,6 +97,13 @@ func main() {
 		case 3: // 退出
 			return
 		}
+	}
+}
+
+// 记录调试信息
+func logDebug(format string, v ...interface{}) {
+	if cfg != nil && cfg.App.DebugMode {
+		log.Printf("[DEBUG] "+format, v...)
 	}
 }
 
@@ -190,22 +197,25 @@ func executeCommand(command string) {
 	fmt.Println("\n" + strings.Repeat("─", 80))
 	fmt.Println("命令输出:")
 	fmt.Println(strings.Repeat("─", 80))
-	
-	// 删除这行错误的调试输出
-	// fmt.Println("添加导入")
-	
+
 	if cfg != nil && cfg.App.DebugMode {
 		log.Printf("[DEBUG] 执行命令: %s", command)
 	}
-	
-	cmd := exec.Command("cmd.exe", "/c", command)
+
+	var cmd *exec.Cmd
+	if os.PathSeparator == '\\' {
+		cmd = exec.Command("cmd.exe", "/c", command)
+	} else {
+		cmd = exec.Command("sh", "-c", command)
+	}
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
+
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("\n执行失败: %v\n", err)
 	}
-	
+
 	fmt.Println(strings.Repeat("─", 80))
 }

@@ -3,7 +3,7 @@ GOFLAGS := -ldflags="-s -w" -trimpath
 LDFLAGS := -buildvcs=false
 CGO_ENABLED := 0
 
-.PHONY: all clean build
+.PHONY: all clean build install
 
 all: build-windows build-linux
 

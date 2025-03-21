@@ -14,7 +14,7 @@ import (
 
 // CommandGenerator 负责生成命令
 type CommandGenerator struct {
-	client   openai.Client // 使用值类型
+	client   openai.Client
 	messages []openai.ChatCompletionMessageParamUnion
 	config   *config.Config
 }
@@ -35,46 +35,49 @@ func New(cfg *config.Config) *CommandGenerator {
 
 // GenerateCommand 生成命令
 func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
+	// 添加用户消息
 	g.messages = append(g.messages, openai.UserMessage(request))
 
 	params := openai.ChatCompletionNewParams{
-		Model:       openai.ChatModel(g.config.API.Model), // 模型类型转换
+		Model:       openai.ChatModel(g.config.API.Model),
 		Messages:    g.messages,
 		Temperature: openai.Float(0.2),
 	}
 
-	// 调试模式下打印请求信息
-	if g.config.App.DebugMode {
+	// 调试日志
+	g.logDebug(func() {
 		log.Printf("[DEBUG] 发送请求到: %s", g.config.API.URL)
 		log.Printf("[DEBUG] 使用模型: %s", g.config.API.Model)
 		log.Printf("[DEBUG] 请求内容: %s", request)
-	}
+	})
 
+	// 处理API请求
+	result, err := g.streamAPIRequest(params)
+	if err != nil {
+		return "", err
+	}
+	
+	return result, nil
+}
+
+// 流式处理API请求并返回结果
+func (g *CommandGenerator) streamAPIRequest(params openai.ChatCompletionNewParams) (string, error) {
 	ctx := context.Background()
 	stream := g.client.Chat.Completions.NewStreaming(ctx, params)
 	defer stream.Close()
 
 	var builder strings.Builder
 	acc := openai.ChatCompletionAccumulator{}
-
-	// 调试模式下记录响应片段
-	var debugChunks []string
-
+	
 	for stream.Next() {
 		chunk := stream.Current()
 		acc.AddChunk(chunk)
 
-		// 调试模式下记录每个响应片段
-		if g.config.App.DebugMode {
-			debugChunks = append(debugChunks, fmt.Sprintf("%+v", chunk))
-		}
-
 		if content, ok := acc.JustFinishedContent(); ok {
 			builder.WriteString(content)
-			// 调试模式下打印每个完成的内容片段
-			if g.config.App.DebugMode {
+			g.logDebug(func() {
 				log.Printf("[DEBUG] 收到内容片段: %s", content)
-			}
+			})
 		}
 	}
 
@@ -82,31 +85,30 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 		return "", fmt.Errorf("API请求失败: %w", err)
 	}
 
-	// 从响应对象中获取完整内容
-	result := ""
-	if len(acc.Choices) > 0 && acc.Choices[0].Message.Content != "" {
+	// 获取结果
+	result := strings.TrimSpace(builder.String())
+	if result == "" && len(acc.Choices) > 0 {
 		result = acc.Choices[0].Message.Content
-	} else {
-		// 如果响应对象中没有内容，则使用累积的内容
-		result = strings.TrimSpace(builder.String())
 	}
-
-	// 检查结果是否为空
+	
+	// 检查结果
 	if result == "" {
 		return "", fmt.Errorf("API返回了空命令")
 	}
-
-	// 调试模式下打印完整响应信息
-	if g.config.App.DebugMode {
-		log.Printf("[DEBUG] 响应完成，总共收到 %d 个片段", len(debugChunks))
-		log.Printf("[DEBUG] 完整响应内容: %s", result)
-
-		// 打印响应对象信息
-		log.Printf("[DEBUG] 响应对象: %+v", acc)
+	
+	// 保存响应到消息历史
+	if len(acc.Choices) > 0 {
+		g.messages = append(g.messages, acc.Choices[0].Message.ToParam())
 	}
-
-	g.saveResponse(acc)
+	
 	return result, nil
+}
+
+// 调试日志辅助函数
+func (g *CommandGenerator) logDebug(logFunc func()) {
+	if g.config != nil && g.config.App.DebugMode {
+		logFunc()
+	}
 }
 
 // 生成系统提示
@@ -130,11 +132,4 @@ ren "old file.txt" "new file.txt"
 "请使用以下命令："  # 解释性文字
 ren old.txt new.txt  # 缺少必要引号
 move file1.txt file2.txt && echo "完成"  # 多余的解释性步骤`, osHint)
-}
-
-// 保存响应到消息历史
-func (g *CommandGenerator) saveResponse(acc openai.ChatCompletionAccumulator) {
-	if len(acc.Choices) > 0 && acc.Choices[0].Message.Content != "" {
-		g.messages = append(g.messages, acc.Choices[0].Message.ToParam())
-	}
 }
