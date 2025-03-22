@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 	"strings"
 
@@ -56,7 +57,7 @@ func (g *CommandGenerator) GenerateCommand(request string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return result, nil
 }
 
@@ -68,7 +69,7 @@ func (g *CommandGenerator) streamAPIRequest(params openai.ChatCompletionNewParam
 
 	var builder strings.Builder
 	acc := openai.ChatCompletionAccumulator{}
-	
+
 	for stream.Next() {
 		chunk := stream.Current()
 		acc.AddChunk(chunk)
@@ -90,17 +91,17 @@ func (g *CommandGenerator) streamAPIRequest(params openai.ChatCompletionNewParam
 	if result == "" && len(acc.Choices) > 0 {
 		result = acc.Choices[0].Message.Content
 	}
-	
+
 	// 检查结果
 	if result == "" {
 		return "", fmt.Errorf("API返回了空命令")
 	}
-	
+
 	// 保存响应到消息历史
 	if len(acc.Choices) > 0 {
 		g.messages = append(g.messages, acc.Choices[0].Message.ToParam())
 	}
-	
+
 	return result, nil
 }
 
@@ -113,10 +114,19 @@ func (g *CommandGenerator) logDebug(logFunc func()) {
 
 // 生成系统提示
 func genSystemPrompt() string {
-	osHint := "Linux Bash"
-	if runtime.GOOS == "windows" {
-		osHint = "Windows CMD"
+	// osHint := "Linux Bash"
+	// if runtime.GOOS == "windows" {
+	// 	osHint = "Windows CMD"
+	// }
+	osHint := runtime.GOOS
+
+	// 如果是Linux系统，尝试获取发行版信息
+	if osHint == "linux" {
+		if distro, err := getLinuxDistro(); err == nil && distro != "" {
+			osHint = fmt.Sprintf("Linux %s", distro)
+		}
 	}
+
 	return fmt.Sprintf(`作为%s命令行专家，严格遵循：
 1. 仅返回可直接在终端执行的纯命令文本
 2. 禁止包含任何解释性文字、代码块标记或注释
@@ -132,4 +142,28 @@ ren "old file.txt" "new file.txt"
 "请使用以下命令："  # 解释性文字
 ren old.txt new.txt  # 缺少必要引号
 move file1.txt file2.txt && echo "完成"  # 多余的解释性步骤`, osHint)
+}
+
+// getLinuxDistro 从/etc/os-release获取Linux发行版信息
+func getLinuxDistro() (string, error) {
+	// 读取/etc/os-release文件
+	data, err := os.ReadFile("/etc/os-release")
+	if err != nil {
+		return "", err
+	}
+
+	// 解析文件内容
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		// 查找NAME字段
+		if strings.HasPrefix(line, "NAME=") {
+			// 提取NAME的值
+			name := strings.TrimPrefix(line, "NAME=")
+			// 去除引号
+			name = strings.Trim(name, "\"")
+			return name, nil
+		}
+	}
+
+	return "", fmt.Errorf("无法从/etc/os-release获取发行版信息")
 }
