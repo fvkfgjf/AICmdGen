@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/28074/ai_go/config"
+	"github.com/fvkfgjf/AICmdGen/config"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -114,10 +114,6 @@ func (g *CommandGenerator) logDebug(logFunc func()) {
 
 // 生成系统提示
 func genSystemPrompt() string {
-	// osHint := "Linux Bash"
-	// if runtime.GOOS == "windows" {
-	// 	osHint = "Windows CMD"
-	// }
 	osHint := runtime.GOOS
 
 	// 如果是Linux系统，尝试获取发行版信息

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# AI_GO Linux安装脚本
-# 此脚本用于在Linux系统上安装AI_GO命令行工具
+# AICmdGen Linux安装脚本
+# 此脚本用于在Linux系统上安装AICmdGen命令行工具
 
 set -e
 
@@ -13,7 +13,7 @@ NC='\033[0m' # 无颜色
 
 # 安装目录
 INSTALL_DIR="/usr/local/bin"
-CONFIG_DIR="/etc/ai_go"
+CONFIG_DIR="/etc/AICmdGen"
 CONFIG_FILE="$CONFIG_DIR/config.toml"
 EXECUTABLE="ai"
 
@@ -121,7 +121,7 @@ cleanup() {
 # 主函数
 main() {
     echo "======================================"
-    echo "      AI_GO Linux 安装程序"
+    echo "      AICmdGen Linux 安装程序"
     echo "======================================"
     
     check_root

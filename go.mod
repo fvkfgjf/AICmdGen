@@ -1,11 +1,11 @@
-module github.com/28074/ai_go
+module github.com/fvkfgjf/AICmdGen
 
 go 1.23.0
 
 toolchain go1.24.1
 
 // 添加本地替换路径 ↓
-replace github.com/28074 => ../
+replace github.com/fvkfgjf => ../
 
 require (
 	github.com/openai/openai-go v0.1.0-alpha.67

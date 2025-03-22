@@ -43,9 +43,9 @@ func GetDefaultConfig() *Config {
 
 // 获取配置文件路径
 func getConfigPath() string {
-	// 在Linux环境下使用/etc/ai_go目录
+	// 在Linux环境下使用/etc/AICmdGen目录
 	if runtime.GOOS == "linux" {
-		return "/etc/ai_go/config.toml"
+		return "/etc/AICmdGen/config.toml"
 	}
 	// 其他环境使用当前目录
 	return "config.toml"

@@ -18,8 +18,8 @@
 ### Windows安装步骤
 ```bash
 # 克隆仓库
-git clone https://github.com/28074/ai_go.git
-cd ai_go
+git clone https://github.com/fvkfgjf/AICmdGen.git
+cd AICmdGen
 
 # 安装依赖
 make install
@@ -31,13 +31,13 @@ make build
 ### Linux安装步骤
 ```bash
 # 克隆仓库
-git clone https://github.com/28074/ai_go.git
-cd ai_go
+git clone https://github.com/fvkfgjf/AICmdGen.git
+cd AICmdGen
 
 # 使用安装脚本（需要root权限）
 sudo ./install.sh
- ```
- 
+```
+
  ## 使用示例
 ```bash
 # 基本使用
@@ -45,7 +45,7 @@ sudo ./install.sh
 
 # 调试模式（查看详细日志）
 ./ai -debug "将demo.txt重命名为test.txt"
- ```
+```
 
 ## 配置指南
 
@@ -54,7 +54,7 @@ sudo ./install.sh
 ```toml
 [API]
 key = "your-api-key-here"  # 替换为实际API密钥
-model = "gpt-3.5-turbo"    # 可选模型类型
+model = "gpt-3.5-turbo"    # 可选模型
 url = "https://api.openai.com/v1"  # API端点
 
 [App]
@@ -72,7 +72,7 @@ debug_mode = false  # 调试模式开关
 
 ## 项目结构
 ```
-ai_go/
+AICmdGen/
 ├── config/              # 配置管理模块
 │   └── config.go        # 配置文件加载/保存实现
 ├── generator/           # 命令生成模块 

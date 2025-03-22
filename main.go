@@ -8,9 +8,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/28074/ai_go/config"
-	"github.com/28074/ai_go/generator"
 	"github.com/fatih/color"
+	"github.com/fvkfgjf/AICmdGen/config"
+	"github.com/fvkfgjf/AICmdGen/generator"
 )
 
 // 全局配置变量，用于在不同函数间共享配置
