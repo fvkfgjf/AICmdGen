@@ -15,7 +15,7 @@
 - Go 1.20+ 开发环境
 - 有效的OpenAI API密钥
 
-### 安装步骤
+### Windows安装步骤
 ```bash
 # 克隆仓库
 git clone https://github.com/28074/ai_go.git
@@ -27,6 +27,25 @@ make install
 # 编译项目
 make build
 ```
+
+### Linux安装步骤
+```bash
+# 克隆仓库
+git clone https://github.com/28074/ai_go.git
+cd ai_go
+
+# 使用安装脚本（需要root权限）
+sudo ./install.sh
+ ```
+ 
+ ## 使用示例
+```bash
+# 基本使用
+./ai "查找当前目录下所有的go文件"
+
+# 调试模式（查看详细日志）
+./ai -debug "将demo.txt重命名为test.txt"
+ ```
 
 ## 配置指南
 

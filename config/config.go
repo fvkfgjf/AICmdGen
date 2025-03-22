@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/viper"
 )
@@ -40,9 +41,19 @@ func GetDefaultConfig() *Config {
 	}
 }
 
+// 获取配置文件路径
+func getConfigPath() string {
+	// 在Linux环境下使用/etc/ai_go目录
+	if runtime.GOOS == "linux" {
+		return "/etc/ai_go/config.toml"
+	}
+	// 其他环境使用当前目录
+	return "config.toml"
+}
+
 // Load 从配置文件加载配置
 func Load() (*Config, error) {
-	configPath := "config.toml"
+	configPath := getConfigPath()
 
 	// 检查配置文件是否存在，不存在则返回错误
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
@@ -74,21 +85,21 @@ func Load() (*Config, error) {
 
 // Save 将配置保存到文件
 func Save(config *Config) error {
-	configPath := "config.toml"
-	
+	configPath := getConfigPath()
+
 	// 使用viper保存配置
 	v := viper.New()
-	
+
 	// 设置配置值
 	v.Set("API.Key", config.API.Key)
 	v.Set("API.Model", config.API.Model)
 	v.Set("API.URL", config.API.URL)
 	v.Set("App.DebugMode", config.App.DebugMode)
-	
+
 	// 设置配置文件路径和类型
 	v.SetConfigFile(filepath.Clean(configPath))
 	v.SetConfigType("toml")
-	
+
 	// 创建配置文件目录（如果不存在）
 	dir := filepath.Dir(configPath)
 	if dir != "." && dir != "" {
@@ -96,11 +107,11 @@ func Save(config *Config) error {
 			return fmt.Errorf("创建配置目录失败: %w", err)
 		}
 	}
-	
+
 	// 使用WriteConfigAs代替WriteConfig确保文件被创建
 	if err := v.WriteConfigAs(configPath); err != nil {
 		return fmt.Errorf("写入配置文件失败: %w", err)
 	}
-	
+
 	return nil
 }
