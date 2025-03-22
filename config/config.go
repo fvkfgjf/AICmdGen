@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/spf13/viper"
 )
@@ -39,16 +38,6 @@ func GetDefaultConfig() *Config {
 			DebugMode: false,
 		},
 	}
-}
-
-// 获取配置文件路径
-func getConfigPath() string {
-	// 在Linux环境下使用/etc/AICmdGen目录
-	if runtime.GOOS == "linux" {
-		return "/etc/AICmdGen/config.toml"
-	}
-	// 其他环境使用当前目录
-	return "config.toml"
 }
 
 // Load 从配置文件加载配置

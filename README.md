@@ -21,11 +21,12 @@
 git clone https://github.com/fvkfgjf/AICmdGen.git
 cd AICmdGen
 
-# 安装依赖
-make install
+# 使用安装脚本（需要管理员权限）
+powershell -ExecutionPolicy ByPass -File .\install.ps1
 
-# 编译项目
-make build
+# 或手动编译
+# 注意：需要先安装make工具
+make install && make build
 ```
 
 ### Linux安装步骤

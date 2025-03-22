@@ -1,17 +1,17 @@
-# AICmdGen Windowså®‰è£…è„šæœ¬
-# æ­¤è„šæœ¬ç”¨äºåœ¨Windowsç³»ç»Ÿä¸Šå®‰è£…AICmdGenå‘½ä»¤è¡Œå·¥å…·
+# AICmdGen Windows°²×°½Å±¾
+# ´Ë½Å±¾ÓÃÓÚÔÚWindowsÏµÍ³ÉÏ°²×°AICmdGenÃüÁîĞĞ¹¤¾ß
 
-# åœæ­¢è„šæœ¬æ‰§è¡Œæ—¶æ˜¾ç¤ºé”™è¯¯
+# Í£Ö¹½Å±¾Ö´ĞĞÊ±ÏÔÊ¾´íÎó
 $ErrorActionPreference = "Stop"
 
-# å®‰è£…ç›®å½•
+# °²×°Ä¿Â¼
 $InstallDir = "$env:LOCALAPPDATA\AICmdGen"
 $ConfigDir = "$env:APPDATA\AICmdGen"
 $ConfigFile = "$ConfigDir\config.toml"
 $Executable = "ai.exe"
 $FinalPath = "$InstallDir\$Executable"
 
-# é¢œè‰²å®šä¹‰
+# ÑÕÉ«¶¨Òå
 function Write-ColorOutput($ForegroundColor) {
     $fc = $host.UI.RawUI.ForegroundColor
     $host.UI.RawUI.ForegroundColor = $ForegroundColor
@@ -37,129 +37,129 @@ function Print-Error($message) {
     exit 1
 }
 
-# æ£€æŸ¥ç®¡ç†å‘˜æƒé™
+# ¼ì²é¹ÜÀíÔ±È¨ÏŞ
 function Check-Admin {
     $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     $isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     
     if (-not $isAdmin) {
-        Print-Error "è¯·ä»¥ç®¡ç†å‘˜æƒé™è¿è¡Œæ­¤è„šæœ¬"
+        Print-Error "ÇëÒÔ¹ÜÀíÔ±È¨ÏŞÔËĞĞ´Ë½Å±¾"
     }
 }
 
-# æ£€æŸ¥Goç¯å¢ƒ
+# ¼ì²éGo»·¾³
 function Check-Go {
-    Print-Info "æ£€æŸ¥Goç¯å¢ƒ..."
+    Print-Info "¼ì²éGo»·¾³..."
     try {
         $goVersion = (go version) -replace "go version go" -replace " windows.*"
-        Print-Info "æ£€æµ‹åˆ°Goç‰ˆæœ¬: $goVersion"
+        Print-Info "¼ì²âµ½Go°æ±¾: $goVersion"
         
-        # ç®€å•ç‰ˆæœ¬æ¯”è¾ƒï¼Œç¡®ä¿è‡³å°‘æ˜¯1.20
+        # ¼òµ¥°æ±¾±È½Ï£¬È·±£ÖÁÉÙÊÇ1.20
         $versionParts = $goVersion.Split(".")
         $major = [int]$versionParts[0]
         $minor = [int]$versionParts[1]
         
         if ($major -lt 1 -or ($major -eq 1 -and $minor -lt 20)) {
-            Print-Error "Goç‰ˆæœ¬è¿‡ä½ï¼Œéœ€è¦1.20+ç‰ˆæœ¬"
+            Print-Error "Go°æ±¾¹ıµÍ£¬ĞèÒª1.20+°æ±¾"
         }
     }
     catch {
-        Print-Error "æœªæ‰¾åˆ°Goç¯å¢ƒï¼Œè¯·å…ˆå®‰è£…Go 1.20+"
+        Print-Error "Î´ÕÒµ½Go»·¾³£¬ÇëÏÈ°²×°Go 1.20+"
     }
 }
 
-# ç¼–è¯‘é¡¹ç›®
+# ±àÒëÏîÄ¿
 function Build-Project {
-    Print-Info "ç¼–è¯‘é¡¹ç›®..."
+    Print-Info "±àÒëÏîÄ¿..."
     
-    # æ‰§è¡Œgo mod tidy
+    # Ö´ĞĞgo mod tidy
     go mod tidy
     if ($LASTEXITCODE -ne 0) {
-        Print-Error "go mod tidy å¤±è´¥"
+        Print-Error "go mod tidy Ê§°Ü"
     }
     
-    # ç¼–è¯‘é¡¹ç›®
+    # ±àÒëÏîÄ¿
     $env:CGO_ENABLED = 0
-    go build -ldflags="-s -w" -trimpath -o $Executable .\main.go
+    go build -tags sysdir -ldflags="-s -w" -trimpath -o $Executable .\main.go
     if ($LASTEXITCODE -ne 0) {
-        Print-Error "ç¼–è¯‘å¤±è´¥"
+        Print-Error "±àÒëÊ§°Ü"
     }
     
     if (-not (Test-Path $Executable)) {
-        Print-Error "ç¼–è¯‘åçš„å¯æ‰§è¡Œæ–‡ä»¶ä¸å­˜åœ¨"
+        Print-Error "±àÒëºóµÄ¿ÉÖ´ĞĞÎÄ¼ş²»´æÔÚ"
     }
     
-    Print-Info "ç¼–è¯‘æˆåŠŸ"
+    Print-Info "±àÒë³É¹¦"
 }
 
-# åˆ›å»ºé…ç½®ç›®å½•å’Œæ–‡ä»¶
+# ´´½¨ÅäÖÃÄ¿Â¼ºÍÎÄ¼ş
 function Setup-Config {
-    Print-Info "è®¾ç½®é…ç½®æ–‡ä»¶..."
+    Print-Info "ÉèÖÃÅäÖÃÎÄ¼ş..."
     
-    # åˆ›å»ºé…ç½®ç›®å½•
+    # ´´½¨ÅäÖÃÄ¿Â¼
     if (-not (Test-Path $ConfigDir)) {
         New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
     }
     
-    # å¦‚æœé…ç½®æ–‡ä»¶ä¸å­˜åœ¨ï¼Œåˆ›å»ºé»˜è®¤é…ç½®
+    # Èç¹ûÅäÖÃÎÄ¼ş²»´æÔÚ£¬´´½¨Ä¬ÈÏÅäÖÃ
     if (-not (Test-Path $ConfigFile)) {
         $configContent = @"
-[API]
-URL = "https://api.openai.com/v1"
-Key = "your-api-key-here"
-Model = "gpt-3.5-turbo"
+[api]
+key = 'your-api-key-here'
+model = 'gpt-3.5-turbo'
+url = 'https://api.openai.com/v1'
 
-[App]
-DebugMode = false
+[app]
+debugmode = false
 "@
         $configContent | Out-File -FilePath $ConfigFile -Encoding utf8
-        Print-Info "å·²åˆ›å»ºé»˜è®¤é…ç½®æ–‡ä»¶: $ConfigFile"
-        Print-Warn "è¯·ç¼–è¾‘é…ç½®æ–‡ä»¶å¹¶è®¾ç½®æ‚¨çš„APIå¯†é’¥"
+        Print-Info "ÒÑ´´½¨Ä¬ÈÏÅäÖÃÎÄ¼ş: $ConfigFile"
+        Print-Warn "Çë±à¼­ÅäÖÃÎÄ¼ş²¢ÉèÖÃÄúµÄAPIÃÜÔ¿"
     }
     else {
-        Print-Info "é…ç½®æ–‡ä»¶å·²å­˜åœ¨: $ConfigFile"
+        Print-Info "ÅäÖÃÎÄ¼şÒÑ´æÔÚ: $ConfigFile"
     }
 }
 
-# å®‰è£…å¯æ‰§è¡Œæ–‡ä»¶
+# °²×°¿ÉÖ´ĞĞÎÄ¼ş
 function Install-Executable {
-    Print-Info "å®‰è£…å¯æ‰§è¡Œæ–‡ä»¶åˆ° $InstallDir..."
+    Print-Info "°²×°¿ÉÖ´ĞĞÎÄ¼şµ½ $InstallDir..."
     
-    # åˆ›å»ºå®‰è£…ç›®å½•
+    # ´´½¨°²×°Ä¿Â¼
     if (-not (Test-Path $InstallDir)) {
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     }
     
-    # å¤åˆ¶å¯æ‰§è¡Œæ–‡ä»¶åˆ°å®‰è£…ç›®å½•
+    # ¸´ÖÆ¿ÉÖ´ĞĞÎÄ¼şµ½°²×°Ä¿Â¼
     Copy-Item -Path $Executable -Destination $FinalPath -Force
     
-    Print-Info "å®‰è£…å®Œæˆ"
+    Print-Info "°²×°Íê³É"
 }
 
-# æ·»åŠ åˆ°PATHç¯å¢ƒå˜é‡
+# Ìí¼Óµ½PATH»·¾³±äÁ¿
 function Add-ToPath {
-    Print-Info "å°†ç¨‹åºæ·»åŠ åˆ°PATHç¯å¢ƒå˜é‡..."
+    Print-Info "½«³ÌĞòÌí¼Óµ½PATH»·¾³±äÁ¿..."
     
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
     if ($userPath -notlike "*$InstallDir*") {
         [Environment]::SetEnvironmentVariable("Path", "$userPath;$InstallDir", "User")
-        Print-Info "å·²æ·»åŠ åˆ°ç”¨æˆ·PATHç¯å¢ƒå˜é‡"
+        Print-Info "ÒÑÌí¼Óµ½ÓÃ»§PATH»·¾³±äÁ¿"
     }
     else {
-        Print-Info "ç¨‹åºè·¯å¾„å·²åœ¨PATHç¯å¢ƒå˜é‡ä¸­"
+        Print-Info "³ÌĞòÂ·¾¶ÒÑÔÚPATH»·¾³±äÁ¿ÖĞ"
     }
 }
 
-# æ¸…ç†ä¸´æ—¶æ–‡ä»¶
+# ÇåÀíÁÙÊ±ÎÄ¼ş
 function Cleanup {
-    Print-Info "æ¸…ç†ä¸´æ—¶æ–‡ä»¶..."
+    Print-Info "ÇåÀíÁÙÊ±ÎÄ¼ş..."
     Remove-Item -Path $Executable -Force
 }
 
-# ä¸»å‡½æ•°
+# Ö÷º¯Êı
 function Main {
     Write-Output "======================================"
-    Write-Output "      AICmdGen Windows å®‰è£…ç¨‹åº"
+    Write-Output "      AICmdGen Windows °²×°³ÌĞò"
     Write-Output "======================================"
     
     Check-Admin
@@ -171,14 +171,14 @@ function Main {
     Cleanup
     
     Write-Output "======================================"
-    Write-Output "      å®‰è£…æˆåŠŸ!"
+    Write-Output "      °²×°³É¹¦!"
     Write-Output "======================================"
-    Write-Output "ä½¿ç”¨æ–¹æ³•: ai ""æ‚¨çš„å‘½ä»¤æè¿°"""
-    Write-Output "é…ç½®æ–‡ä»¶: $ConfigFile"
-    Write-Output "è¯·ç¡®ä¿ç¼–è¾‘é…ç½®æ–‡ä»¶å¹¶è®¾ç½®æ‚¨çš„APIå¯†é’¥"
+    Write-Output "Ê¹ÓÃ·½·¨: ai ""ÄúµÄÃüÁîÃèÊö"""
+    Write-Output "ÅäÖÃÎÄ¼ş: $ConfigFile"
+    Write-Output "ÇëÈ·±£±à¼­ÅäÖÃÎÄ¼ş²¢ÉèÖÃÄúµÄAPIÃÜÔ¿"
     Write-Output ""
-    Write-Output "æ³¨æ„: æ‚¨å¯èƒ½éœ€è¦é‡æ–°å¯åŠ¨å‘½ä»¤æç¤ºç¬¦æˆ–PowerShellä»¥ä½¿PATHç¯å¢ƒå˜é‡ç”Ÿæ•ˆ"
+    Write-Output "×¢Òâ: Äú¿ÉÄÜĞèÒªÖØĞÂÆô¶¯ÃüÁîÌáÊ¾·û»òPowerShellÒÔÊ¹PATH»·¾³±äÁ¿ÉúĞ§"
 }
 
-# æ‰§è¡Œä¸»å‡½æ•°
+# Ö´ĞĞÖ÷º¯Êı
 Main

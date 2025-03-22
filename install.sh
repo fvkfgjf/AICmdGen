@@ -63,7 +63,7 @@ check_go() {
 build_project() {
     print_info "编译项目..."
     go mod tidy
-    CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $EXECUTABLE ./main.go
+    CGO_ENABLED=0 go build -tags sysdir -ldflags="-s -w" -trimpath -o $EXECUTABLE ./main.go
     
     if [ ! -f "$EXECUTABLE" ]; then
         print_error "编译失败"
@@ -83,13 +83,13 @@ setup_config() {
     # 如果配置文件不存在，创建默认配置
     if [ ! -f "$CONFIG_FILE" ]; then
         cat > "$CONFIG_FILE" << EOF
-[API]
-URL = "https://api.openai.com/v1"
-Key = "your-api-key-here"
-Model = "gpt-3.5-turbo"
+[api]
+key = 'your-api-key-here'
+model = 'gpt-3.5-turbo'
+url = 'https://api.openai.com/v1'
 
-[App]
-DebugMode = false
+[app]
+debugmode = false
 EOF
         print_info "已创建默认配置文件: $CONFIG_FILE"
         print_warn "请编辑配置文件并设置您的API密钥"
