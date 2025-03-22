@@ -44,12 +44,11 @@ func GetDefaultConfig() *Config {
 func Load() (*Config, error) {
 	configPath := getConfigPath()
 
-	// 检查配置文件是否存在，不存在则返回错误
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("配置文件不存在")
 	}
 
-	// 使用viper加载配置
+	// 加载配置
 	v := viper.New()
 	v.SetConfigFile(filepath.Clean(configPath))
 	v.SetConfigType("toml")
@@ -58,13 +57,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("读取配置文件失败: %w", err)
 	}
 
-	// 解析配置到结构体
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("解析配置失败: %w", err)
 	}
 
-	// 设置默认值
 	if config.API.URL == "" {
 		config.API.URL = "https://api.openai.com/v1"
 	}
@@ -76,16 +73,11 @@ func Load() (*Config, error) {
 func Save(config *Config) error {
 	configPath := getConfigPath()
 
-	// 使用viper保存配置
 	v := viper.New()
-
-	// 设置配置值
 	v.Set("API.Key", config.API.Key)
 	v.Set("API.Model", config.API.Model)
 	v.Set("API.URL", config.API.URL)
 	v.Set("App.DebugMode", config.App.DebugMode)
-
-	// 设置配置文件路径和类型
 	v.SetConfigFile(filepath.Clean(configPath))
 	v.SetConfigType("toml")
 
@@ -97,7 +89,7 @@ func Save(config *Config) error {
 		}
 	}
 
-	// 使用WriteConfigAs代替WriteConfig确保文件被创建
+	// 确保文件被创建
 	if err := v.WriteConfigAs(configPath); err != nil {
 		return fmt.Errorf("写入配置文件失败: %w", err)
 	}

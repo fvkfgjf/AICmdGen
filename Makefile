@@ -12,7 +12,7 @@ install:
 	$(GO) mod download
 
 build:
-	$(GO) build $(GOFLAGS) -o bin/ai.exe ./main.go
+	$(GO) build $(GOFLAGS) -o bin/ai.exe cmd/ai/main.go
 
 build-windows:
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -o bin\ai-windows-amd64.exe ./main.go

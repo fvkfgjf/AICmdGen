@@ -80,7 +80,7 @@ function Build-Project {
     
     # 编译项目
     $env:CGO_ENABLED = 0
-    go build -tags sysdir -ldflags="-s -w" -trimpath -o $Executable .\main.go
+    go build -tags sysdir -ldflags="-s -w" -trimpath -o $Executable cmd/ai/main.go
     if ($LASTEXITCODE -ne 0) {
         Print-Error "编译失败"
     }
@@ -112,7 +112,7 @@ url = 'https://api.openai.com/v1'
 [app]
 debugmode = false
 "@
-        $configContent | Out-File -FilePath $ConfigFile -Encoding utf8
+        [System.IO.File]::WriteAllText($ConfigFile, $configContent)
         Print-Info "已创建默认配置文件: $ConfigFile"
         Print-Warn "请编辑配置文件并设置您的API密钥"
     }

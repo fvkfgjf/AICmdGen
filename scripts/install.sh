@@ -63,7 +63,7 @@ check_go() {
 build_project() {
     print_info "编译项目..."
     go mod tidy
-    CGO_ENABLED=0 go build -tags sysdir -ldflags="-s -w" -trimpath -o $EXECUTABLE ./main.go
+    CGO_ENABLED=0 go build -tags sysdir -ldflags="-s -w" -trimpath -o $EXECUTABLE cmd/ai/main.go
     
     if [ ! -f "$EXECUTABLE" ]; then
         print_error "编译失败"
