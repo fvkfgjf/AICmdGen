@@ -8,7 +8,7 @@ toolchain go1.24.1
 replace github.com/fvkfgjf => ../
 
 require (
-	github.com/openai/openai-go v0.1.0-alpha.67
+	github.com/openai/openai-go v0.1.0-beta.2
 	github.com/spf13/viper v1.20.0
 )
 

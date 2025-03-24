@@ -84,7 +84,10 @@ func PromptChoice() int {
 // ExecuteCommand 执行命令
 func ExecuteCommand(command string, debugMode bool) {
 	fmt.Println("\n" + strings.Repeat("─", 80))
-	fmt.Println("命令输出:")
+
+	// 添加命令概览显示
+	cmdColor := color.New(color.FgMagenta, color.Bold)
+	cmdColor.Println("执行命令:", command)
 	fmt.Println(strings.Repeat("─", 80))
 
 	if debugMode {
