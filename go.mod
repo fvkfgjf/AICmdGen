@@ -8,8 +8,8 @@ toolchain go1.24.1
 replace github.com/fvkfgjf => ../
 
 require (
-	github.com/openai/openai-go v0.1.0-beta.2
-	github.com/spf13/viper v1.20.0
+	github.com/openai/openai-go v0.1.0-beta.4
+	github.com/spf13/viper v1.20.1
 )
 
 require github.com/fatih/color v1.18.0
@@ -20,7 +20,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
-	github.com/sagikazarmark/locafero v0.8.0 // indirect
+	github.com/sagikazarmark/locafero v0.9.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
