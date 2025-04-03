@@ -1,60 +1,75 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/fvkfgjf/AICmdGen/internal/config"
 	"github.com/fvkfgjf/AICmdGen/internal/generator"
 	"github.com/fvkfgjf/AICmdGen/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var (
-	debugFlag = flag.Bool("debug", false, "启用调试模式")
-	helpFlag  = flag.Bool("help", false, "显示帮助信息")
+	debugFlag bool
 	cfg       *config.Config
 )
 
-func main() {
-	flag.Parse()
+// rootCmd 表示没有调用子命令时的基础命令
+// 修改 rootCmd 的参数校验逻辑
+var rootCmd = &cobra.Command{
+	Use:   "ai <命令描述>",
+	Short: "AI命令生成工具",
+	Long:  `AICmdGen 是一个基于AI的命令行工具生成器，可以将自然语言转换为命令行命令。`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			// 自动触发帮助信息显示
+			cmd.Help()
+			os.Exit(0)
+		}
+		return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		// 加载配置
+		var err error
+		cfg, err = loadConfig()
+		if err != nil {
+			handleConfigError(err)
+			return
+		}
 
-	if *helpFlag {
-		ui.PrintUsage()
-		return
-	}
+		// 如果命令行指定了调试模式，覆盖配置
+		if debugFlag {
+			cfg.App.DebugMode = true
+		}
 
+		logConfigInfo()
+
+		// 创建命令生成器
+		cmdGen := generator.New(cfg)
+
+		// 处理用户请求
+		request := strings.Join(args, " ")
+		processCommandRequest(cmdGen, request)
+	},
+}
+
+func init() {
 	// 初始化日志
 	log.SetPrefix("[AICmdGen] ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 
-	// 加载配置
-	var err error
-	cfg, err = loadConfig()
-	if err != nil {
-		handleConfigError(err)
-		return
+	// 添加命令行标志
+	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "启用调试模式")
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-
-	// 如果命令行指定了调试模式，覆盖配置
-	if *debugFlag {
-		cfg.App.DebugMode = true
-	}
-
-	logConfigInfo()
-
-	// 获取用户输入
-	args := flag.Args()
-	if len(args) == 0 {
-		ui.PrintUsage()
-		return
-	}
-
-	cmdGen := generator.New(cfg)
-
-	request := strings.Join(args, " ")
-	processCommandRequest(cmdGen, request)
 }
 
 // 加载配置文件
@@ -104,23 +119,35 @@ func processCommandRequest(cmdGen *generator.Generator, request string) {
 
 // 处理用户选择
 func handleUserChoice(cmdGen *generator.Generator, request, cmd string) {
-	for {
-		choice := ui.PromptChoice()
-		switch choice {
-		case 1:
-			ui.ExecuteCommand(cmd, cfg.App.DebugMode)
-			return
-		case 2:
-			newRequest := request + " (请提供另一种实现方式)"
-			cmd, err := cmdGen.GenerateCommand(newRequest)
-			if err != nil {
-				log.Fatalf("生成命令失败: %v", err)
-			}
-			ui.PrintCommandPanel(request, cmd)
-		case 3:
-			return
-		}
-	}
+    for {
+        choice := ui.PromptChoice()
+        switch choice {
+        case 1:
+            if err := ui.ExecuteCommand(cmd, cfg.App.DebugMode); err != nil {
+                fmt.Printf("\n执行失败: %v\n", err)
+                retryChoice := ui.PromptRetryChoice()
+                if retryChoice == 1 {
+                    // 让AI重新生成命令
+                    newRequest := fmt.Sprintf("%s (执行失败: %v, 请提供替代方案)", request, err)
+                    if newCmd, err := cmdGen.GenerateCommand(newRequest); err == nil {
+                        cmd = newCmd
+                        ui.PrintCommandPanel(request, cmd)
+                        continue
+                    }
+                }
+            }
+            return
+        case 2:
+            newRequest := request + " (请提供另一种实现方式)"
+            cmd, err := cmdGen.GenerateCommand(newRequest)
+            if err != nil {
+                log.Fatalf("生成命令失败: %v", err)
+            }
+            ui.PrintCommandPanel(request, cmd)
+        case 3:
+            return
+        }
+    }
 }
 
 // 记录调试信息
